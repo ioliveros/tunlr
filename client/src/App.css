@@ -1,59 +1,197 @@
-#app {
+#App {
     height: 100vh;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
 }
 
-#logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+/* --- top bar --- */
+.topbar {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
 }
 
-.result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
+.brand {
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    font-size: 15px;
 }
 
-.input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
+.muted {
+    color: var(--muted);
+}
+
+.error {
+    margin: 12px 20px;
+    padding: 8px 12px;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: 6px;
+}
+
+/* --- panes (one per host, styled like a terminal session) --- */
+.panes {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pane {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--pane);
+    overflow: hidden;
+}
+
+.pane-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--pane-head);
+    border-bottom: 1px solid var(--border);
+}
+
+.lights {
+    display: flex;
+    gap: 6px;
+}
+
+.lights i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.lights .r { background: #ff5f56; }
+.lights .y { background: #ffbd2e; }
+.lights .g { background: #27c93f; }
+
+.pane-title {
+    font-weight: 600;
+}
+
+.status-dot {
+    margin-left: auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+}
+
+.status-dot.idle {
+    background: #555;
+}
+
+.pane-body {
+    padding: 6px 14px 14px;
+}
+
+/* --- forward rows (shared grid keeps header/rows/add-row aligned) --- */
+.fwd-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1.4fr 0.8fr 0.8fr 90px;
+    gap: 12px;
+    align-items: center;
+    padding: 7px 0;
+}
+
+.fwd-row:not(.head):not(.add-row):hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.fwd-row.head {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.accent {
+    color: var(--accent);
+}
+
+.col-action {
+    text-align: right;
+}
+
+.empty {
+    color: var(--muted);
+    padding: 10px 0;
+    font-style: italic;
+}
+
+.icon-btn {
+    background: none;
     border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
+    color: var(--muted);
     cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
-.input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
+.icon-btn.danger:hover {
+    color: var(--danger);
+    background: rgba(255, 107, 107, 0.1);
 }
 
-.input-box .input {
-    border: none;
-    border-radius: 3px;
+/* --- inline add row --- */
+.add-row {
+    border-top: 1px dashed var(--border);
+    margin-top: 4px;
+    padding-top: 12px;
+}
+
+.add-row input {
+    background: #0c0c0e;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 6px 8px;
+    border-radius: 5px;
     outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
+    width: 100%;
 }
 
-.input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+.add-row input:focus {
+    border-color: var(--accent);
 }
 
-.input-box .input:focus {
+.add-row input::placeholder {
+    color: #4d4d55;
+}
+
+.add-btn {
+    background: var(--accent);
+    color: #06231b;
     border: none;
-    background-color: rgba(255, 255, 255, 1);
+    font-family: var(--mono);
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.add-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.row-err {
+    grid-column: 1 / -1;
+    color: var(--danger);
+    font-size: 12px;
+    padding-top: 6px;
 }
