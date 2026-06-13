@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/ioliveros/tunlr/internal/config"
 	"github.com/ioliveros/tunlr/internal/db"
 	"github.com/ioliveros/tunlr/internal/model"
 	"github.com/ioliveros/tunlr/internal/repository"
-	"github.com/ioliveros/tunlr/internal/seed"
 	"github.com/ioliveros/tunlr/internal/service"
 )
 
@@ -32,10 +30,6 @@ func (a *App) startup(ctx context.Context) {
 	cfg := config.Load()
 	database := db.Connect(cfg)
 	repo := repository.NewHostRepository(database)
-
-	if err := seed.SeedDefaults(repo); err != nil {
-		log.Printf("seeding default hosts failed: %v", err)
-	}
 
 	a.tunnels = service.NewTunnelService(repo)
 }

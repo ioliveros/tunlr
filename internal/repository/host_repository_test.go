@@ -8,7 +8,6 @@ import (
 	"github.com/ioliveros/tunlr/internal/db"
 	"github.com/ioliveros/tunlr/internal/model"
 	"github.com/ioliveros/tunlr/internal/repository"
-	"github.com/ioliveros/tunlr/internal/seed"
 )
 
 func newTestRepo(t *testing.T) *repository.HostRepository {
@@ -16,33 +15,6 @@ func newTestRepo(t *testing.T) *repository.HostRepository {
 	t.Setenv("DB_PATH", filepath.Join(t.TempDir(), "test.db"))
 	database := db.Connect(config.Load())
 	return repository.NewHostRepository(database)
-}
-
-func TestSeedDefaultsIsIdempotent(t *testing.T) {
-	repo := newTestRepo(t)
-
-	if err := seed.SeedDefaults(repo); err != nil {
-		t.Fatalf("first seed: %v", err)
-	}
-	if err := seed.SeedDefaults(repo); err != nil {
-		t.Fatalf("second seed: %v", err)
-	}
-
-	hosts, err := repo.ListHosts()
-	if err != nil {
-		t.Fatalf("list: %v", err)
-	}
-	if len(hosts) != 2 {
-		t.Fatalf("expected 2 seeded hosts, got %d", len(hosts))
-	}
-
-	var total int
-	for _, h := range hosts {
-		total += len(h.Forwards)
-	}
-	if total != 7 {
-		t.Fatalf("expected 7 forwards across hosts, got %d", total)
-	}
 }
 
 func TestHostAndForwardCRUD(t *testing.T) {
