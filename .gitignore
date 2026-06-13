@@ -1,0 +1,7 @@
+build/bin
+node_modules
+frontend/dist
+
+# local runtime / secrets
+*.db
+.env
