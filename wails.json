@@ -2,6 +2,8 @@
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "tunlr",
   "outputfilename": "tunlr",
+  "frontend:dir": "client",
+  "wailsjsdir": "client",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",

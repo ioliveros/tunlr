@@ -1,6 +1,6 @@
 build/bin
 node_modules
-frontend/dist
+client/dist
 
 # local runtime / secrets
 *.db

@@ -3,7 +3,6 @@ module github.com/ioliveros/tunlr
 go 1.24.0
 
 require (
-	github.com/joho/godotenv v1.5.1
 	github.com/wailsapp/wails/v2 v2.12.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
