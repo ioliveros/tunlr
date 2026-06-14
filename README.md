@@ -2,7 +2,7 @@
 
 A macOS desktop app for managing SSH tunnels. Define port forwards once and tunlr keeps them alive — reconnecting automatically if a connection drops.
 
-![tunlr screenshot](build/appicon.png)
+<img src="build/appicon.png" width="80" />
 
 ## Features
 
