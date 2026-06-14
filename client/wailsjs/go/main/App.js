@@ -26,8 +26,28 @@ export function GetHost(arg1) {
   return window['go']['main']['App']['GetHost'](arg1);
 }
 
+export function GetStatus() {
+  return window['go']['main']['App']['GetStatus']();
+}
+
 export function ListHosts() {
   return window['go']['main']['App']['ListHosts']();
+}
+
+export function ListSSHKeys() {
+  return window['go']['main']['App']['ListSSHKeys']();
+}
+
+export function PickSSHKey() {
+  return window['go']['main']['App']['PickSSHKey']();
+}
+
+export function ReconnectHost(arg1) {
+  return window['go']['main']['App']['ReconnectHost'](arg1);
+}
+
+export function SetHostKey(arg1, arg2) {
+  return window['go']['main']['App']['SetHostKey'](arg1, arg2);
 }
 
 export function UpdateForward(arg1) {
