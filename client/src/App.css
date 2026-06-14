@@ -144,31 +144,54 @@
     background: rgba(255, 107, 107, 0.1);
 }
 
-/* --- inline add row --- */
-.add-row {
-    border-top: 1px dashed var(--border);
-    margin-top: 4px;
-    padding-top: 12px;
+/* --- new connection form --- */
+.conn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 14px;
 }
 
-.add-row input {
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.field > span {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.field input {
     background: #0c0c0e;
     border: 1px solid var(--border);
     color: var(--text);
     font-family: var(--mono);
     font-size: 13px;
-    padding: 6px 8px;
+    padding: 7px 9px;
     border-radius: 5px;
     outline: none;
     width: 100%;
 }
 
-.add-row input:focus {
+.field input:focus {
     border-color: var(--accent);
 }
 
-.add-row input::placeholder {
+.field input::placeholder {
     color: #4d4d55;
+}
+
+.add-field {
+    justify-content: flex-end;
+}
+
+.conn-err {
+    color: var(--danger);
+    font-size: 12px;
+    padding: 0 14px 14px;
 }
 
 .add-btn {

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/ioliveros/tunlr/internal/model"
 	"gorm.io/gorm"
 )
@@ -49,6 +51,36 @@ func (r *HostRepository) DeleteHost(id uint) error {
 func (r *HostRepository) CountHosts() (int64, error) {
 	var n int64
 	err := r.db.Model(&model.Host{}).Count(&n).Error
+	return n, err
+}
+
+// FindHost looks up a host by its SSH identity (user@hostname:port).
+// It returns (nil, nil) when no matching host exists.
+func (r *HostRepository) FindHost(user, hostname string, port int) (*model.Host, error) {
+	var host model.Host
+	err := r.db.Where("user = ? AND hostname = ? AND port = ?", user, hostname, port).First(&host).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &host, nil
+}
+
+// GetForward returns a single forward by id.
+func (r *HostRepository) GetForward(id uint) (*model.Forward, error) {
+	var f model.Forward
+	if err := r.db.First(&f, id).Error; err != nil {
+		return nil, err
+	}
+	return &f, nil
+}
+
+// CountForwardsForHost returns how many forwards belong to a host.
+func (r *HostRepository) CountForwardsForHost(hostID uint) (int64, error) {
+	var n int64
+	err := r.db.Model(&model.Forward{}).Where("host_id = ?", hostID).Count(&n).Error
 	return n, err
 }
 

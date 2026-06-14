@@ -1,3 +1,28 @@
+export namespace dto {
+	
+	export class ConnectionInput {
+	    connectionName: string;
+	    host: string;
+	    remotePort: number;
+	    localPort: number;
+	    domain: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConnectionInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connectionName = source["connectionName"];
+	        this.host = source["host"];
+	        this.remotePort = source["remotePort"];
+	        this.localPort = source["localPort"];
+	        this.domain = source["domain"];
+	    }
+	}
+
+}
+
 export namespace model {
 	
 	export class Forward {

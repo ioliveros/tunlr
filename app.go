@@ -5,6 +5,7 @@ import (
 
 	"github.com/ioliveros/tunlr/internal/config"
 	"github.com/ioliveros/tunlr/internal/db"
+	"github.com/ioliveros/tunlr/internal/dto"
 	"github.com/ioliveros/tunlr/internal/model"
 	"github.com/ioliveros/tunlr/internal/repository"
 	"github.com/ioliveros/tunlr/internal/service"
@@ -45,6 +46,10 @@ func (a *App) CreateHost(host model.Host) (*model.Host, error) { return a.tunnel
 func (a *App) UpdateHost(host model.Host) (*model.Host, error) { return a.tunnels.UpdateHost(host) }
 
 func (a *App) DeleteHost(id uint) error { return a.tunnels.DeleteHost(id) }
+
+func (a *App) AddConnection(in dto.ConnectionInput) (*model.Host, error) {
+	return a.tunnels.AddConnection(in)
+}
 
 func (a *App) AddForward(f model.Forward) (*model.Forward, error) { return a.tunnels.AddForward(f) }
 
