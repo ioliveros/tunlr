@@ -1,16 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
-import { ListHosts, AddConnection, DeleteForward } from '../wailsjs/go/main/App';
+import { ListHosts, AddConnection, DeleteForward, GetStatus, SetHostKey, PickSSHKey, ListSSHKeys, ReconnectHost } from '../wailsjs/go/main/App';
+import { EventsOn } from '../wailsjs/runtime';
 import { dto, model } from '../wailsjs/go/models';
+
+type ConnState = { state: string; error?: string };
+type Status = { hosts: Record<string, ConnState>; forwards: Record<string, ConnState> };
+
+const emptyStatus: Status = { hosts: {}, forwards: {} };
 
 function isPort(v: string): boolean {
     const n = Number(v);
     return Number.isInteger(n) && n >= 1 && n <= 65535;
 }
 
-// StatusDot is a placeholder until the SSH engine reports live state.
-function StatusDot() {
-    return <span className="status-dot idle" title="idle — connect coming soon" />;
+// Dot shows a connection's live state: green connected, amber connecting,
+// red disconnected/error.
+function Dot({ conn }: { conn?: ConnState }) {
+    const state = conn?.state ?? 'disconnected';
+    const cls = state === 'connected' ? 'green' : state === 'connecting' ? 'amber' : 'red';
+    const title = conn?.error ? `${state} — ${conn.error}` : state;
+    return <span className={`status-dot ${cls}`} title={title} />;
 }
 
 function NewConnectionForm({ onAdded }: { onAdded: () => void }) {
@@ -63,11 +73,6 @@ function NewConnectionForm({ onAdded }: { onAdded: () => void }) {
     return (
         <section className="pane new-conn">
             <header className="pane-header">
-                <div className="lights">
-                    <i className="r" />
-                    <i className="y" />
-                    <i className="g" />
-                </div>
                 <span className="pane-title">new connection</span>
             </header>
             <div className="conn-grid">
@@ -103,10 +108,21 @@ function NewConnectionForm({ onAdded }: { onAdded: () => void }) {
     );
 }
 
-function ForwardRow({ forward, onDelete }: { forward: model.Forward; onDelete: (id: number) => void }) {
+function ForwardRow({
+    forward,
+    conn,
+    onDelete,
+}: {
+    forward: model.Forward;
+    conn?: ConnState;
+    onDelete: (id: number) => void;
+}) {
     return (
         <div className="fwd-row">
-            <div className="col-name">{forward.label || <span className="muted">—</span>}</div>
+            <div className="col-name">
+                <Dot conn={conn} />
+                {forward.label || <span className="muted">—</span>}
+            </div>
             <div className="col-ip">{forward.remoteHost}</div>
             <div className="col-port accent">{forward.localPort}</div>
             <div className="col-port">{forward.remotePort}</div>
@@ -119,7 +135,58 @@ function ForwardRow({ forward, onDelete }: { forward: model.Forward; onDelete: (
     );
 }
 
-function HostPane({ host, onChanged }: { host: model.Host; onChanged: () => void }) {
+function HostPane({ host, status, onChanged }: { host: model.Host; status: Status; onChanged: () => void }) {
+    const [keyBusy, setKeyBusy] = useState(false);
+    const [availableKeys, setAvailableKeys] = useState<dto.SSHKey[] | null>(null);
+    const hostConn = status.hosts[String(host.id)];
+    const keyName = host.keyPath ? host.keyPath.split('/').pop() : null;
+
+    async function openKeyPicker() {
+        if (keyBusy) return;
+        setKeyBusy(true);
+        try {
+            const keys = await ListSSHKeys();
+            setAvailableKeys(keys);
+        } finally {
+            setKeyBusy(false);
+        }
+    }
+
+    async function selectKey(path: string) {
+        setAvailableKeys(null);
+        if (!path) return;
+        if (path === '__browse__') {
+            const picked = await PickSSHKey();
+            if (!picked) return;
+            setKeyBusy(true);
+            try {
+                await SetHostKey(host.id, picked);
+                onChanged();
+            } finally {
+                setKeyBusy(false);
+            }
+            return;
+        }
+        setKeyBusy(true);
+        try {
+            await SetHostKey(host.id, path);
+            onChanged();
+        } finally {
+            setKeyBusy(false);
+        }
+    }
+
+    async function clearKey() {
+        if (keyBusy) return;
+        setKeyBusy(true);
+        try {
+            await SetHostKey(host.id, '');
+            onChanged();
+        } finally {
+            setKeyBusy(false);
+        }
+    }
+
     async function remove(id: number) {
         await DeleteForward(id);
         onChanged();
@@ -128,27 +195,69 @@ function HostPane({ host, onChanged }: { host: model.Host; onChanged: () => void
     return (
         <section className="pane">
             <header className="pane-header">
-                <div className="lights">
-                    <i className="r" />
-                    <i className="y" />
-                    <i className="g" />
-                </div>
                 <span className="pane-title">{host.name}</span>
                 <span className="muted">
                     {host.user}@{host.hostname}:{host.port}
                 </span>
-                <StatusDot />
+                <div className="pane-status">
+                    <div className="key-ctrl">
+                        {availableKeys !== null ? (
+                            <select
+                                className="key-select"
+                                autoFocus
+                                defaultValue=""
+                                onChange={(e) => selectKey(e.target.value)}
+                                onBlur={() => setAvailableKeys(null)}
+                            >
+                                <option value="" disabled>select key…</option>
+                                {availableKeys.map((k) => (
+                                    <option key={k.path} value={k.path}>{k.name}</option>
+                                ))}
+                                <option value="__browse__">browse…</option>
+                            </select>
+                        ) : keyName ? (
+                            <span className="key-badge">
+                                <button className="key-badge-name" disabled={keyBusy} onClick={openKeyPicker} title="Change key">
+                                    {keyName}
+                                </button>
+                                <button
+                                    className="icon-btn"
+                                    disabled={keyBusy}
+                                    onClick={clearKey}
+                                    title="Clear key — revert to ssh-agent"
+                                >×</button>
+                            </span>
+                        ) : (
+                            <button className="key-btn" disabled={keyBusy} onClick={openKeyPicker}>
+                                {keyBusy ? '…' : 'pick key'}
+                            </button>
+                        )}
+                    </div>
+                    <Dot conn={hostConn} />
+                </div>
             </header>
+            {(hostConn?.state === 'error' || hostConn?.state === 'given-up') && hostConn.error && (
+                <div className="host-err">
+                    <span>{hostConn.error}</span>
+                    {hostConn.state === 'given-up' && (
+                        <button className="reconnect-btn" onClick={() => ReconnectHost(host.id)}>
+                            reconnect
+                        </button>
+                    )}
+                </div>
+            )}
             <div className="pane-body">
                 <div className="fwd-row head">
                     <div className="col-name">NAME</div>
                     <div className="col-ip">HOST</div>
-                    <div className="col-port">LOCAL</div>
-                    <div className="col-port">REMOTE</div>
+                    <div className="col-port">LOCAL PORT</div>
+                    <div className="col-port">REMOTE PORT</div>
                     <div className="col-action" />
                 </div>
                 {host.forwards?.length ? (
-                    host.forwards.map((f) => <ForwardRow key={f.id} forward={f} onDelete={remove} />)
+                    host.forwards.map((f) => (
+                        <ForwardRow key={f.id} forward={f} conn={status.forwards[String(f.id)]} onDelete={remove} />
+                    ))
                 ) : (
                     <div className="empty">no connections yet</div>
                 )}
@@ -159,6 +268,7 @@ function HostPane({ host, onChanged }: { host: model.Host; onChanged: () => void
 
 export default function App() {
     const [hosts, setHosts] = useState<model.Host[]>([]);
+    const [status, setStatus] = useState<Status>(emptyStatus);
     const [error, setError] = useState('');
 
     const refresh = useCallback(() => {
@@ -169,6 +279,11 @@ export default function App() {
 
     useEffect(() => {
         refresh();
+        GetStatus()
+            .then((s) => setStatus(s as Status))
+            .catch(() => {});
+        const off = EventsOn('tunnel:status', (s: Status) => setStatus(s));
+        return () => off();
     }, [refresh]);
 
     return (
@@ -181,7 +296,7 @@ export default function App() {
             <main className="panes">
                 <NewConnectionForm onAdded={refresh} />
                 {hosts.map((h) => (
-                    <HostPane key={h.id} host={h} onChanged={refresh} />
+                    <HostPane key={h.id} host={h} status={status} onChanged={refresh} />
                 ))}
             </main>
         </div>
