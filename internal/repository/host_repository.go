@@ -38,8 +38,17 @@ func (r *HostRepository) CreateHost(host *model.Host) error {
 }
 
 // UpdateHost saves changes to a host's own fields (not its forwards).
+// Uses a map so zero-value fields (e.g. empty KeyPath) are written.
 func (r *HostRepository) UpdateHost(host *model.Host) error {
-	return r.db.Model(host).Omit("Forwards").Updates(host).Error
+	return r.db.Model(host).Updates(map[string]any{
+		"name":            host.Name,
+		"hostname":        host.Hostname,
+		"user":            host.User,
+		"port":            host.Port,
+		"auth_method":     string(host.AuthMethod),
+		"key_path":        host.KeyPath,
+		"host_key_policy": string(host.HostKeyPolicy),
+	}).Error
 }
 
 // DeleteHost removes a host and cascades to its forwards.

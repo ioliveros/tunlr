@@ -1,12 +1,14 @@
-package tunnel
+package tunnel_test
 
 import (
 	"fmt"
 	"net"
 	"testing"
+
+	"github.com/ioliveros/tunlr/internal/tunnel"
 )
 
-// freeLocalPort must never kill the current process, even though tunlr's own
+// FreeLocalPort must never kill the current process, even though tunlr's own
 // listeners show up in lsof on the same port.
 func TestFreeLocalPortSkipsSelf(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -16,7 +18,7 @@ func TestFreeLocalPortSkipsSelf(t *testing.T) {
 	defer ln.Close()
 	port := ln.Addr().(*net.TCPAddr).Port
 
-	freeLocalPort(port) // owned by this test process; must be left alone
+	tunnel.FreeLocalPort(port) // owned by this test process; must be left alone
 
 	c, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {

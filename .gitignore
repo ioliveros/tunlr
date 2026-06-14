@@ -6,3 +6,5 @@ client/dist
 *.db
 .env
 build/.DS_Store
+
+coverage.out
