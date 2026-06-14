@@ -7,15 +7,27 @@ import (
 	"github.com/ioliveros/tunlr/internal/config"
 	"github.com/ioliveros/tunlr/internal/db"
 	"github.com/ioliveros/tunlr/internal/dto"
+	"github.com/ioliveros/tunlr/internal/model"
 	"github.com/ioliveros/tunlr/internal/repository"
 	"github.com/ioliveros/tunlr/internal/service"
+	"github.com/ioliveros/tunlr/internal/tunnel"
 )
+
+// noopEngine satisfies service.Engine without touching the network, so the
+// persistence behaviour can be tested without dialing SSH.
+type noopEngine struct{}
+
+func (noopEngine) Apply(model.Host)        {}
+func (noopEngine) StopHost(uint)           {}
+func (noopEngine) StopForward(uint, uint)  {}
+func (noopEngine) ReconnectHost(uint)      {}
+func (noopEngine) Snapshot() tunnel.Status { return tunnel.Status{} }
 
 func newService(t *testing.T) *service.TunnelService {
 	t.Helper()
 	t.Setenv("DB_PATH", filepath.Join(t.TempDir(), "test.db"))
 	database := db.Connect(config.Load())
-	return service.NewTunnelService(repository.NewHostRepository(database))
+	return service.NewTunnelService(repository.NewHostRepository(database), noopEngine{})
 }
 
 func TestAddConnectionParsesDomainAndGroupsByHost(t *testing.T) {
@@ -31,7 +43,7 @@ func TestAddConnectionParsesDomainAndGroupsByHost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("add first connection: %v", err)
 	}
-	if first.User != "gcp" || first.Hostname != "me.ioliveros.dev" || first.Port != 22 {
+	if first.User != "dev" || first.Hostname != "me.ioliveros.dev" || first.Port != 22 {
 		t.Fatalf("domain parsed wrong: %+v", first)
 	}
 	if len(first.Forwards) != 1 {
