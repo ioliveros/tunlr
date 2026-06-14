@@ -194,7 +194,7 @@ func (hc *hostConn) run() {
 			if !hc.sleep(wait) {
 				return
 			}
-			wait = nextBackoff(wait)
+			wait = NextBackoff(wait)
 			continue
 		}
 		hc.mu.Lock()
@@ -225,7 +225,7 @@ func (hc *hostConn) run() {
 		if !hc.sleep(wait) {
 			return
 		}
-		wait = nextBackoff(wait)
+		wait = NextBackoff(wait)
 	}
 }
 
@@ -261,11 +261,11 @@ func (hc *hostConn) dial() (*ssh.Client, error) {
 	host := hc.host
 	hc.mu.Unlock()
 
-	auths := authMethods(host)
+	auths := AuthMethods(host)
 	if len(auths) == 0 {
 		return nil, fmt.Errorf("no SSH credentials available (load a key into ssh-agent)")
 	}
-	cb, err := hostKeyCallback(host.HostKeyPolicy)
+	cb, err := HostKeyCallback(host.HostKeyPolicy)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +306,7 @@ func (hc *hostConn) startForward(f *fwdState, client *ssh.Client) {
 	if err != nil {
 		hc.mu.Lock()
 		f.state = StateError
-		f.err = portError(f.fwd.LocalPort, err)
+		f.err = PortError(f.fwd.LocalPort, err)
 		hc.mu.Unlock()
 		hc.mgr.publish()
 		return
@@ -334,7 +334,7 @@ func (hc *hostConn) acceptLoop(f *fwdState, ln net.Listener, client *ssh.Client)
 				local.Close()
 				return
 			}
-			pipe(local, remote)
+			Pipe(local, remote)
 		}()
 	}
 }
@@ -431,7 +431,7 @@ func (hc *hostConn) sleep(d time.Duration) bool {
 	}
 }
 
-func pipe(a, b net.Conn) {
+func Pipe(a, b net.Conn) {
 	done := make(chan struct{}, 2)
 	go func() { io.Copy(a, b); done <- struct{}{} }()
 	go func() { io.Copy(b, a); done <- struct{}{} }()
@@ -440,7 +440,7 @@ func pipe(a, b net.Conn) {
 	b.Close()
 }
 
-func nextBackoff(d time.Duration) time.Duration {
+func NextBackoff(d time.Duration) time.Duration {
 	d *= 2
 	if d > reconnectMaxWait {
 		return reconnectMaxWait
@@ -448,6 +448,6 @@ func nextBackoff(d time.Duration) time.Duration {
 	return d
 }
 
-func portError(port int, err error) string {
+func PortError(port int, err error) string {
 	return fmt.Sprintf("local port %d unavailable: %v", port, err)
 }

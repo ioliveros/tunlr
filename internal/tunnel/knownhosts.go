@@ -15,11 +15,11 @@ import (
 
 var knownHostsMu sync.Mutex
 
-// hostKeyCallback verifies the server's host key against ~/.ssh/known_hosts.
+// HostKeyCallback verifies the server's host key against ~/.ssh/known_hosts.
 // With the accept-new policy unknown hosts are trusted on first use and
 // persisted; a changed key for a known host is always rejected.
-func hostKeyCallback(policy model.HostKeyPolicy) (ssh.HostKeyCallback, error) {
-	path, err := knownHostsPath()
+func HostKeyCallback(policy model.HostKeyPolicy) (ssh.HostKeyCallback, error) {
+	path, err := KnownHostsPath()
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +39,13 @@ func hostKeyCallback(policy model.HostKeyPolicy) (ssh.HostKeyCallback, error) {
 		var keyErr *knownhosts.KeyError
 		if errors.As(err, &keyErr) && len(keyErr.Want) == 0 {
 			// Unknown host: trust on first use and record it.
-			return appendKnownHost(path, hostname, remote, key)
+			return AppendKnownHost(path, hostname, remote, key)
 		}
 		return err
 	}, nil
 }
 
-func knownHostsPath() (string, error) {
+func KnownHostsPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -63,7 +63,7 @@ func knownHostsPath() (string, error) {
 	return path, nil
 }
 
-func appendKnownHost(path, hostname string, remote net.Addr, key ssh.PublicKey) error {
+func AppendKnownHost(path, hostname string, remote net.Addr, key ssh.PublicKey) error {
 	knownHostsMu.Lock()
 	defer knownHostsMu.Unlock()
 
