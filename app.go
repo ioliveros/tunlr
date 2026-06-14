@@ -82,6 +82,15 @@ func (a *App) GetStatus() tunnel.Status { return a.tunnels.Status() }
 // a host that has given up after exhausting its retries.
 func (a *App) ReconnectHost(id uint) { a.tunnels.ReconnectHost(id) }
 
+// GetVersion returns the build version, commit, and date injected at compile time.
+func (a *App) GetVersion() map[string]string {
+	return map[string]string{
+		"version": Version,
+		"commit":  Commit,
+		"date":    BuildDate,
+	}
+}
+
 // ListSSHKeys returns the SSH private keys available in ~/.ssh.
 func (a *App) ListSSHKeys() []dto.SSHKey { return a.tunnels.ListSSHKeys() }
 

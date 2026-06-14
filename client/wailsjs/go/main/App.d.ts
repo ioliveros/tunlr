@@ -18,6 +18,8 @@ export function GetHost(arg1:number):Promise<model.Host>;
 
 export function GetStatus():Promise<tunnel.Status>;
 
+export function GetVersion():Promise<Record<string, string>>;
+
 export function ListHosts():Promise<Array<model.Host>>;
 
 export function ListSSHKeys():Promise<Array<dto.SSHKey>>;

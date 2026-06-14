@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
-import { ListHosts, AddConnection, DeleteForward, GetStatus, SetHostKey, PickSSHKey, ListSSHKeys, ReconnectHost } from '../wailsjs/go/main/App';
+import appIcon from './assets/appicon.png';
+import { ListHosts, AddConnection, DeleteForward, GetStatus, SetHostKey, PickSSHKey, ListSSHKeys, ReconnectHost, GetVersion } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
 import { dto, model } from '../wailsjs/go/models';
 
@@ -266,10 +267,38 @@ function HostPane({ host, status, onChanged }: { host: model.Host; status: Statu
     );
 }
 
+function AboutPanel({ onClose }: { onClose: () => void }) {
+    const [ver, setVer] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        GetVersion().then(setVer).catch(() => {});
+    }, []);
+
+    return (
+        <div className="about-backdrop" onClick={onClose}>
+            <div className="about-panel" onClick={(e) => e.stopPropagation()}>
+                <img src={appIcon} width="64" className="about-icon" />
+                <h2 className="about-name">tunlr</h2>
+                <p className="about-desc">ssh tunnel client manager</p>
+                <div className="about-meta">
+                    <span>{ver.version ?? 'dev'}</span>
+                    {ver.commit && ver.commit !== 'unknown' && (
+                        <span className="muted">({ver.commit})</span>
+                    )}
+                </div>
+                <a className="about-author" href="https://ioliveros.dev" target="_blank" rel="noreferrer">
+                    ioliveros.dev
+                </a>
+            </div>
+        </div>
+    );
+}
+
 export default function App() {
     const [hosts, setHosts] = useState<model.Host[]>([]);
     const [status, setStatus] = useState<Status>(emptyStatus);
     const [error, setError] = useState('');
+    const [showAbout, setShowAbout] = useState(false);
 
     const refresh = useCallback(() => {
         ListHosts()
@@ -291,6 +320,7 @@ export default function App() {
             <div className="topbar">
                 <span className="brand">tunlr</span>
                 <span className="muted">ssh tunnel manager</span>
+                <button className="about-btn" onClick={() => setShowAbout(true)}>?</button>
             </div>
             {error && <div className="error">{error}</div>}
             <main className="panes">
@@ -299,6 +329,7 @@ export default function App() {
                     <HostPane key={h.id} host={h} status={status} onChanged={refresh} />
                 ))}
             </main>
+            {showAbout && <AboutPanel onClose={() => setShowAbout(false)} />}
         </div>
     );
 }
