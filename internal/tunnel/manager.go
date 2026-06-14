@@ -300,7 +300,7 @@ func (hc *hostConn) startForward(f *fwdState, client *ssh.Client) {
 
 	// Take over the local port: kill anything already bound to it (e.g. a
 	// manually-started `ssh -f -N -L` tunnel) before claiming it.
-	freeLocalPort(f.fwd.LocalPort)
+	FreeLocalPort(f.fwd.LocalPort)
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", f.fwd.LocalPort))
 	if err != nil {
