@@ -279,7 +279,7 @@ function AboutPanel({ onClose }: { onClose: () => void }) {
             <div className="about-panel" onClick={(e) => e.stopPropagation()}>
                 <img src={appIcon} width="64" className="about-icon" />
                 <h2 className="about-name">tunlr</h2>
-                <p className="about-desc">ssh tunnel client manager</p>
+                <p className="about-desc">a lightweight ssh tunnel client manager</p>
                 <div className="about-meta">
                     <span>{ver.version ?? 'dev'}</span>
                     {ver.commit && ver.commit !== 'unknown' && (

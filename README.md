@@ -1,7 +1,7 @@
 <div align="center">
   <img src="build/appicon.png" width="80" />
   <h1>tunlr</h1>
-  <p>A desktop client for managing SSH tunnels. Define port forwards once and tunlr keeps them alive, reconnecting automatically if a connection drops.</p>
+  <p>A lightweight desktop client for managing SSH tunnels. Define port forwards once and tunlr keeps them alive, reconnecting automatically if a connection drops.</p>
 </div>
 
 ## Features
