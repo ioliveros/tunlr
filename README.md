@@ -1,8 +1,8 @@
-# tunlr
-
-A macOS desktop app for managing SSH tunnels. Define port forwards once and tunlr keeps them alive — reconnecting automatically if a connection drops.
-
-<img src="build/appicon.png" width="80" />
+<div align="center">
+  <img src="build/appicon.png" width="80" />
+  <h1>tunlr</h1>
+  <p>A desktop client for managing SSH tunnels. Define port forwards once and tunlr keeps them alive, reconnecting automatically if a connection drops.</p>
+</div>
 
 ## Features
 
@@ -58,10 +58,21 @@ go test ./...
 ### macOS
 
 ```bash
-wails build
+./build.sh
 ```
 
-The built app is output to `build/bin/tunlr.app`. To produce a distributable `.dmg` or notarized build, see the [Wails packaging docs](https://wails.io/docs/guides/packaging).
+This reads the version from `VERSION`, stamps the git commit and build date into the binary via `-ldflags`, then runs `wails build`. The built app is output to `build/bin/tunlr.app`.
+
+To bump the version, edit `VERSION` before running the script:
+
+```bash
+echo "0.2.0" > VERSION
+./build.sh
+```
+
+Any extra flags are forwarded to `wails build` — e.g. `./build.sh -clean` for a clean build.
+
+To produce a distributable `.dmg` or notarized build, see the [Wails packaging docs](https://wails.io/docs/guides/packaging).
 
 ### Regenerate the app icon
 
