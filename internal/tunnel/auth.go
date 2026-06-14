@@ -11,27 +11,27 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-// authMethods builds the SSH auth methods for a host: an explicit key when
+// AuthMethods builds the SSH auth methods for a host: an explicit key when
 // configured, otherwise ssh-agent, falling back to the usual default identity
 // files. This mirrors how a plain `ssh user@host` would authenticate.
-func authMethods(host model.Host) []ssh.AuthMethod {
+func AuthMethods(host model.Host) []ssh.AuthMethod {
 	if host.AuthMethod == model.AuthKey && host.KeyPath != "" {
-		if signer, err := loadKey(host.KeyPath); err == nil {
+		if signer, err := LoadKey(host.KeyPath); err == nil {
 			return []ssh.AuthMethod{ssh.PublicKeys(signer)}
 		}
 	}
 
-	if m := agentAuth(); m != nil {
+	if m := AgentAuth(); m != nil {
 		return []ssh.AuthMethod{m}
 	}
 
-	if signers := defaultSigners(); len(signers) > 0 {
+	if signers := DefaultSigners(); len(signers) > 0 {
 		return []ssh.AuthMethod{ssh.PublicKeys(signers...)}
 	}
 	return nil
 }
 
-func agentAuth() ssh.AuthMethod {
+func AgentAuth() ssh.AuthMethod {
 	sock := os.Getenv("SSH_AUTH_SOCK")
 	if sock == "" {
 		return nil
@@ -43,15 +43,15 @@ func agentAuth() ssh.AuthMethod {
 	return ssh.PublicKeysCallback(agent.NewClient(conn).Signers)
 }
 
-func loadKey(path string) (ssh.Signer, error) {
-	b, err := os.ReadFile(expandPath(path))
+func LoadKey(path string) (ssh.Signer, error) {
+	b, err := os.ReadFile(ExpandPath(path))
 	if err != nil {
 		return nil, err
 	}
 	return ssh.ParsePrivateKey(b)
 }
 
-func defaultSigners() []ssh.Signer {
+func DefaultSigners() []ssh.Signer {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil
@@ -69,7 +69,7 @@ func defaultSigners() []ssh.Signer {
 	return signers
 }
 
-func expandPath(p string) string {
+func ExpandPath(p string) string {
 	if strings.HasPrefix(p, "~/") {
 		if home, err := os.UserHomeDir(); err == nil {
 			return filepath.Join(home, p[2:])
