@@ -15,13 +15,37 @@ function isPort(v: string): boolean {
     return Number.isInteger(n) && n >= 1 && n <= 65535;
 }
 
+// Friendly label + one-line hint shown in the status tooltip.
+const STATE_INFO: Record<string, { label: string; hint: string }> = {
+    connected: { label: 'Connected', hint: 'Tunnel is live and forwarding traffic.' },
+    connecting: { label: 'Connecting…', hint: 'Establishing the SSH connection.' },
+    disconnected: { label: 'Disconnected', hint: 'Tunnel is not active.' },
+    error: { label: 'Error', hint: 'The connection failed.' },
+    'given-up': { label: 'Gave up', hint: 'Automatic reconnect exhausted after repeated failures.' },
+};
+
 // Dot shows a connection's live state: green connected, amber connecting,
-// red disconnected/error.
-function Dot({ conn }: { conn?: ConnState }) {
+// red disconnected/error. Hovering reveals a styled tooltip with a friendly
+// label, a short hint, and the underlying error when present. `align` anchors
+// the tooltip's edge so it doesn't overflow the window (right for header dots
+// near the pane edge, left for forward-row dots).
+function Dot({ conn, align = 'left' }: { conn?: ConnState; align?: 'left' | 'right' }) {
     const state = conn?.state ?? 'disconnected';
     const cls = state === 'connected' ? 'green' : state === 'connecting' ? 'amber' : 'red';
-    const title = conn?.error ? `${state} — ${conn.error}` : state;
-    return <span className={`status-dot ${cls}`} title={title} />;
+    const info = STATE_INFO[state] ?? { label: state, hint: '' };
+    return (
+        <span className={`status-wrap tip-${align}`}>
+            <span className={`status-dot ${cls}`} />
+            <span className="status-tip" role="tooltip">
+                <span className="tip-state">
+                    <span className={`status-dot ${cls}`} />
+                    {info.label}
+                </span>
+                {info.hint && <span className="tip-hint">{info.hint}</span>}
+                {conn?.error && <span className="tip-err">{conn.error}</span>}
+            </span>
+        </span>
+    );
 }
 
 function NewConnectionForm({ onAdded }: { onAdded: () => void }) {
@@ -32,6 +56,7 @@ function NewConnectionForm({ onAdded }: { onAdded: () => void }) {
     const [domain, setDomain] = useState('');
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState('');
+    const [collapsed, setCollapsed] = useState(true);
 
     const valid =
         name.trim() !== '' &&
@@ -74,8 +99,19 @@ function NewConnectionForm({ onAdded }: { onAdded: () => void }) {
     return (
         <section className="pane new-conn">
             <header className="pane-header">
-                <span className="pane-title">new connection</span>
+                <span className="pane-title">create new connection</span>
+                <button
+                    className="collapse-btn"
+                    onClick={() => setCollapsed((c) => !c)}
+                    title={collapsed ? 'Expand' : 'Minimize'}
+                    aria-label={collapsed ? 'Expand' : 'Minimize'}
+                    aria-expanded={!collapsed}
+                >
+                    {collapsed ? '+' : '−'}
+                </button>
             </header>
+            {!collapsed && (
+            <>
             <div className="conn-grid">
                 <label className="field">
                     <span>connection name</span>
@@ -97,14 +133,15 @@ function NewConnectionForm({ onAdded }: { onAdded: () => void }) {
                     <span>domain used to connect</span>
                     <input placeholder="gcp@me.ioliveros.dev" value={domain} onChange={(e) => setDomain(e.target.value)} onKeyDown={onKey} />
                 </label>
-                <div className="field add-field">
-                    <span>&nbsp;</span>
-                    <button className="add-btn" disabled={!valid || busy} onClick={submit}>
-                        {busy ? '…' : '+ Add'}
-                    </button>
-                </div>
+            </div>
+            <div className="conn-actions">
+                <button className="add-btn" disabled={!valid || busy} onClick={submit}>
+                    {busy ? '…' : '+ Add'}
+                </button>
             </div>
             {err && <div className="conn-err">{err}</div>}
+            </>
+            )}
         </section>
     );
 }
@@ -120,13 +157,13 @@ function ForwardRow({
 }) {
     return (
         <div className="fwd-row">
-            <div className="col-name">
-                <Dot conn={conn} />
-                {forward.label || <span className="muted">—</span>}
-            </div>
+            <div className="col-name">{forward.label || <span className="muted">—</span>}</div>
             <div className="col-ip">{forward.remoteHost}</div>
-            <div className="col-port accent">{forward.localPort}</div>
             <div className="col-port">{forward.remotePort}</div>
+            <div className="col-port accent">{forward.localPort}</div>
+            <div className="col-status">
+                <Dot conn={conn} align="right" />
+            </div>
             <div className="col-action">
                 <button className="icon-btn danger" title="Remove" onClick={() => onDelete(forward.id)}>
                     ×
@@ -136,11 +173,22 @@ function ForwardRow({
     );
 }
 
+// Rows shown per page before the forward table paginates. Keeps each pane
+// short enough to fit within the fixed window height.
+const FORWARDS_PER_PAGE = 5;
+
 function HostPane({ host, status, onChanged }: { host: model.Host; status: Status; onChanged: () => void }) {
     const [keyBusy, setKeyBusy] = useState(false);
     const [availableKeys, setAvailableKeys] = useState<dto.SSHKey[] | null>(null);
+    const [page, setPage] = useState(0);
     const hostConn = status.hosts[String(host.id)];
     const keyName = host.keyPath ? host.keyPath.split('/').pop() : null;
+
+    const forwards = host.forwards ?? [];
+    const pageCount = Math.max(1, Math.ceil(forwards.length / FORWARDS_PER_PAGE));
+    // Clamp in case forwards shrank (e.g. a deletion) below the current page.
+    const current = Math.min(page, pageCount - 1);
+    const visible = forwards.slice(current * FORWARDS_PER_PAGE, current * FORWARDS_PER_PAGE + FORWARDS_PER_PAGE);
 
     async function openKeyPicker() {
         if (keyBusy) return;
@@ -196,7 +244,9 @@ function HostPane({ host, status, onChanged }: { host: model.Host; status: Statu
     return (
         <section className="pane">
             <header className="pane-header">
-                <span className="pane-title">{host.name}</span>
+                <span className="pane-title">
+                    <span className="bastion-label">bastion:</span> {host.name}
+                </span>
                 <span className="muted">
                     {host.user}@{host.hostname}:{host.port}
                 </span>
@@ -234,7 +284,7 @@ function HostPane({ host, status, onChanged }: { host: model.Host; status: Statu
                             </button>
                         )}
                     </div>
-                    <Dot conn={hostConn} />
+                    <Dot conn={hostConn} align="right" />
                 </div>
             </header>
             {(hostConn?.state === 'error' || hostConn?.state === 'given-up') && hostConn.error && (
@@ -251,16 +301,56 @@ function HostPane({ host, status, onChanged }: { host: model.Host; status: Statu
                 <div className="fwd-row head">
                     <div className="col-name">NAME</div>
                     <div className="col-ip">HOST</div>
-                    <div className="col-port">LOCAL PORT</div>
                     <div className="col-port">REMOTE PORT</div>
+                    <div className="col-port">LOCAL PORT</div>
+                    <div className="col-status">STATUS</div>
                     <div className="col-action" />
                 </div>
-                {host.forwards?.length ? (
-                    host.forwards.map((f) => (
+                {forwards.length ? (
+                    visible.map((f) => (
                         <ForwardRow key={f.id} forward={f} conn={status.forwards[String(f.id)]} onDelete={remove} />
                     ))
                 ) : (
                     <div className="empty">no connections yet</div>
+                )}
+                {/* Pad short pages so the table height stays constant across pages. */}
+                {pageCount > 1 &&
+                    Array.from({ length: FORWARDS_PER_PAGE - visible.length }).map((_, i) => (
+                        <div className="fwd-row filler" key={`filler-${i}`} aria-hidden="true">
+                            <div className="col-name">&nbsp;</div>
+                            <div className="col-ip">&nbsp;</div>
+                            <div className="col-port">&nbsp;</div>
+                            <div className="col-port">&nbsp;</div>
+                            <div className="col-status"><span className="status-dot" /></div>
+                            <div className="col-action">
+                                <button className="icon-btn danger" tabIndex={-1}>×</button>
+                            </div>
+                        </div>
+                    ))}
+                {pageCount > 1 && (
+                    <div className="pagination">
+                        <button
+                            className="page-btn"
+                            disabled={current === 0}
+                            onClick={() => setPage(current - 1)}
+                            title="Previous page"
+                            aria-label="Previous page"
+                        >
+                            ‹
+                        </button>
+                        <span className="page-info">
+                            {current + 1} / {pageCount}
+                        </span>
+                        <button
+                            className="page-btn"
+                            disabled={current >= pageCount - 1}
+                            onClick={() => setPage(current + 1)}
+                            title="Next page"
+                            aria-label="Next page"
+                        >
+                            ›
+                        </button>
+                    </div>
                 )}
             </div>
         </section>
@@ -294,16 +384,51 @@ function AboutPanel({ onClose }: { onClose: () => void }) {
     );
 }
 
+// SkeletonPane mimics a grouped-connection pane while the initial host list
+// loads, showing FORWARDS_PER_PAGE shimmer rows so the layout doesn't jump.
+function SkeletonPane() {
+    return (
+        <section className="pane skeleton">
+            <header className="pane-header">
+                <span className="sk sk-title" />
+                <span className="sk sk-sub" />
+            </header>
+            <div className="pane-body">
+                <div className="fwd-row head">
+                    <div className="col-name">NAME</div>
+                    <div className="col-ip">HOST</div>
+                    <div className="col-port">REMOTE PORT</div>
+                    <div className="col-port">LOCAL PORT</div>
+                    <div className="col-status">STATUS</div>
+                    <div className="col-action" />
+                </div>
+                {Array.from({ length: FORWARDS_PER_PAGE }).map((_, i) => (
+                    <div className="fwd-row" key={i}>
+                        <div className="col-name"><span className="sk sk-cell" /></div>
+                        <div className="col-ip"><span className="sk sk-cell" /></div>
+                        <div className="col-port"><span className="sk sk-cell short" /></div>
+                        <div className="col-port"><span className="sk sk-cell short" /></div>
+                        <div className="col-status"><span className="sk sk-dot" /></div>
+                        <div className="col-action" />
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
 export default function App() {
     const [hosts, setHosts] = useState<model.Host[]>([]);
     const [status, setStatus] = useState<Status>(emptyStatus);
     const [error, setError] = useState('');
     const [showAbout, setShowAbout] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const refresh = useCallback(() => {
         ListHosts()
             .then(setHosts)
-            .catch((e) => setError(String(e)));
+            .catch((e) => setError(String(e)))
+            .finally(() => setLoading(false));
     }, []);
 
     useEffect(() => {
@@ -325,9 +450,13 @@ export default function App() {
             {error && <div className="error">{error}</div>}
             <main className="panes">
                 <NewConnectionForm onAdded={refresh} />
-                {hosts.map((h) => (
-                    <HostPane key={h.id} host={h} status={status} onChanged={refresh} />
-                ))}
+                {loading ? (
+                    <SkeletonPane />
+                ) : (
+                    hosts.map((h) => (
+                        <HostPane key={h.id} host={h} status={status} onChanged={refresh} />
+                    ))
+                )}
             </main>
             {showAbout && <AboutPanel onClose={() => setShowAbout(false)} />}
         </div>
