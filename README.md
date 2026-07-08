@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="build/appicon.png" width="80" />
-  <p>tunlr is a lightweight desktop client for managing ssh tunnels. Define port forwards once and tunlr keeps them alive, reconnecting automatically if a connection drops.</p>
+  <img src="https://raw.githubusercontent.com/ioliveros/tunlr/main/build/appicon.png" width="80" />
+  <p>tunlr is a lightweight desktop client for managing ssh tunnels.</p>
 
   [![CI](https://github.com/ioliveros/tunlr/actions/workflows/ci.yml/badge.svg)](https://github.com/ioliveros/tunlr/actions/workflows/ci.yml)
   [![codecov](https://codecov.io/gh/ioliveros/tunlr/branch/main/graph/badge.svg)](https://codecov.io/gh/ioliveros/tunlr)
