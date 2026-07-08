@@ -19,11 +19,11 @@ func main() {
 	err := wails.Run(&options.App{
 		Title:         "tunlr",
 		Width:         1024,
-		Height:        538,
+		Height:        446,
 		MinWidth:      1024,
-		MinHeight:     538,
+		MinHeight:     446,
 		MaxWidth:      1024,
-		MaxHeight:     538,
+		MaxHeight:     446,
 		DisableResize: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
