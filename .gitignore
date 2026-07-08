@@ -8,3 +8,4 @@ client/dist
 build/.DS_Store
 
 coverage.out
+.DS_Store
