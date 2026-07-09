@@ -14,12 +14,14 @@ func startTrayLoop() {
 	C.tunlrInstallReopenHandler()
 }
 
+//export tunlrStartTray
 func tunlrStartTray() {
 	if trayStart != nil {
 		trayStart()
 	}
 }
 
+//export tunlrReopen
 func tunlrReopen() {
 	if trayApp != nil {
 		trayApp.showWindow()
