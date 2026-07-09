@@ -6,16 +6,11 @@ import (
 	"path/filepath"
 )
 
-// Config holds runtime configuration for the desktop app.
+
 type Config struct {
-	// DBPath is the absolute path to the SQLite database file.
 	DBPath string
 }
 
-// Load resolves configuration, defaulting the database into the
-// per-user application-support directory so a packaged .app stores
-// its state in the conventional macOS location. DB_PATH overrides it
-// (handy for tests and development).
 func Load() *Config {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
@@ -24,9 +19,6 @@ func Load() *Config {
 	return &Config{DBPath: dbPath}
 }
 
-// defaultDBPath returns <user-config-dir>/tunlr/tunlr.db, creating the
-// directory if needed. On macOS that resolves to
-// ~/Library/Application Support/tunlr/tunlr.db.
 func defaultDBPath() string {
 	base, err := os.UserConfigDir()
 	if err != nil || base == "" {

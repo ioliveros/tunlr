@@ -8,14 +8,13 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
-//go:embed all:client/dist
+
 var assets embed.FS
 
 func main() {
-	// Create an instance of the app structure
+
 	app := NewApp()
 
-	// Create application with options
 	err := wails.Run(&options.App{
 		Title:         "tunlr",
 		Width:         1024,
@@ -30,6 +29,8 @@ func main() {
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
+		OnBeforeClose:    app.beforeClose,
+		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
 			app,
 		},

@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// HostRepository provides CRUD access to hosts and their forwards.
 type HostRepository struct {
 	db *gorm.DB
 }
