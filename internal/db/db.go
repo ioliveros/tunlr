@@ -9,8 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Connect opens the SQLite database, enables foreign keys, and runs schema
-// migrations. It fails fast: a desktop app with no working store is unusable.
 func Connect(cfg *config.Config) *gorm.DB {
 	database, err := gorm.Open(sqlite.Open(cfg.DBPath+"?_foreign_keys=on"), &gorm.Config{})
 	if err != nil {

@@ -6,24 +6,17 @@ import (
 	"gorm.io/gorm"
 )
 
-// AuthMethod identifies how the SSH client authenticates to a host.
 type AuthMethod string
 
 const (
-	// AuthAgent uses the running ssh-agent (SSH_AUTH_SOCK).
 	AuthAgent AuthMethod = "agent"
-	// AuthKey uses a private key file at Host.KeyPath.
 	AuthKey AuthMethod = "key"
 )
 
-// HostKeyPolicy controls how the server's host key is verified.
 type HostKeyPolicy string
 
 const (
-	// HostKeyStrict requires the key to already be in known_hosts.
 	HostKeyStrict HostKeyPolicy = "strict"
-	// HostKeyAcceptNew trusts unknown hosts on first connect (TOFU) but
-	// still rejects a changed key for a known host.
 	HostKeyAcceptNew HostKeyPolicy = "accept-new"
 )
 

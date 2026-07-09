@@ -16,8 +16,8 @@ import (
 var knownHostsMu sync.Mutex
 
 // HostKeyCallback verifies the server's host key against ~/.ssh/known_hosts.
-// With the accept-new policy unknown hosts are trusted on first use and
-// persisted; a changed key for a known host is always rejected.
+// With the accept-new policy unknown hosts are trusted on first use and persisted
+// A changed key for a known host is always rejected.
 func HostKeyCallback(policy model.HostKeyPolicy) (ssh.HostKeyCallback, error) {
 	path, err := KnownHostsPath()
 	if err != nil {

@@ -14,8 +14,7 @@ import (
 	"github.com/ioliveros/tunlr/internal/tunnel"
 )
 
-// Engine is the tunnel runtime the service drives. *tunnel.Manager satisfies
-// it; tests inject a no-op so persistence can be exercised without dialing SSH.
+
 type Engine interface {
 	Apply(host model.Host)
 	StopHost(id uint)
@@ -24,8 +23,6 @@ type Engine interface {
 	Snapshot() tunnel.Status
 }
 
-// TunnelService coordinates persistence of tunnel configuration and drives the
-// SSH tunnel engine (connect/disconnect/status).
 type TunnelService struct {
 	hosts  *repository.HostRepository
 	engine Engine
@@ -134,12 +131,12 @@ func (s *TunnelService) AddForward(f model.Forward) (*model.Forward, error) {
 	return &f, nil
 }
 
+// Restart the listener so changed ports take effect: drop it, then re-sync
+// the host so the engine recreates it from the updated config.
 func (s *TunnelService) UpdateForward(f model.Forward) (*model.Forward, error) {
 	if err := s.hosts.UpdateForward(&f); err != nil {
 		return nil, err
 	}
-	// Restart the listener so changed ports take effect: drop it, then re-sync
-	// the host so the engine recreates it from the updated config.
 	s.engine.StopForward(f.HostID, f.ID)
 	if host, err := s.hosts.GetHost(f.HostID); err == nil {
 		s.engine.Apply(*host)
@@ -238,8 +235,8 @@ func (s *TunnelService) AddConnection(in dto.ConnectionInput) (*model.Host, erro
 	return full, nil
 }
 
-// parseSSHTarget splits "[user@]hostname[:port]" into its parts. Port
-// defaults to 22 when absent or unparseable.
+// parseSSHTarget splits "[user@]hostname[:port]" into its parts. 
+// Port defaults to 22 when absent or unparseable.
 func parseSSHTarget(s string) (sshUser, hostname string, port int) {
 	port = 22
 	s = strings.TrimSpace(s)

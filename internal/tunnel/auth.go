@@ -12,8 +12,8 @@ import (
 )
 
 // AuthMethods builds the SSH auth methods for a host: an explicit key when
-// configured, otherwise ssh-agent, falling back to the usual default identity
-// files. This mirrors how a plain `ssh user@host` would authenticate.
+// configured, otherwise ssh-agent, falling back to the usual default identity files. 
+// This mirrors how a plain `ssh user@host` would authenticate.
 func AuthMethods(host model.Host) []ssh.AuthMethod {
 	if host.AuthMethod == model.AuthKey && host.KeyPath != "" {
 		if signer, err := LoadKey(host.KeyPath); err == nil {

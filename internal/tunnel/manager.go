@@ -20,16 +20,12 @@ const (
 	maxRetries       = 3
 )
 
-// Manager owns the live SSH tunnels. It is safe for concurrent use and emits a
-// fresh Status snapshot whenever anything changes.
 type Manager struct {
 	mu    sync.Mutex
 	hosts map[uint]*hostConn
 	emit  func(Status)
 }
 
-// NewManager creates a Manager. emit is called (off the caller's goroutine path
-// where possible) with a full snapshot on every state change; it may be nil.
 func NewManager(emit func(Status)) *Manager {
 	if emit == nil {
 		emit = func(Status) {}
@@ -326,7 +322,7 @@ func (hc *hostConn) acceptLoop(f *fwdState, ln net.Listener, client *ssh.Client)
 	for {
 		local, err := ln.Accept()
 		if err != nil {
-			return // listener closed
+			return
 		}
 		go func() {
 			remote, err := client.Dial("tcp", fmt.Sprintf("%s:%d", f.fwd.RemoteHost, f.fwd.RemotePort))
