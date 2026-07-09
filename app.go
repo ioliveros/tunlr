@@ -22,8 +22,10 @@ const statusEvent = "tunnel:status"
 // App is the root struct bound to the frontend. Its exported methods are
 // callable from TypeScript via the generated Wails bindings.
 type App struct {
-	ctx     context.Context
-	tunnels *service.TunnelService
+	ctx      context.Context
+	tunnels  *service.TunnelService
+	trayEnd  func()
+	quitting bool
 }
 
 // NewApp creates a new App application struct.
@@ -48,6 +50,8 @@ func (a *App) startup(ctx context.Context) {
 	if err := a.tunnels.StartAll(); err != nil {
 		log.Printf("starting tunnels failed: %v", err)
 	}
+
+	a.initTray()
 }
 
 // --- Host configuration (bound to the frontend) ---

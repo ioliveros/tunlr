@@ -3,6 +3,7 @@ module github.com/ioliveros/tunlr
 go 1.24.0
 
 require (
+	github.com/energye/systray v1.0.3
 	github.com/wailsapp/wails/v2 v2.12.0
 	golang.org/x/crypto v0.33.0
 	gorm.io/driver/sqlite v1.6.0
