@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+//go:embed VERSION
 var versionFile string
 
 var (
