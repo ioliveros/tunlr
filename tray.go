@@ -10,9 +10,10 @@ import (
 )
 
 
+//go:embed build/appicon.png
 var trayIconPNG []byte
 
-
+//go:embed build/windows/icon.ico
 var trayIconICO []byte
 
 var trayStart func()
