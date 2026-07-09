@@ -552,6 +552,7 @@ export default function App() {
             .then((s) => setStatus(s as Status))
             .catch(() => {});
         GetVersion().then(setVer).catch(() => {});
+        new Image().src = appIcon;
         const off = EventsOn('tunnel:status', (s: Status) => setStatus(s));
         return () => off();
     }, [refresh]);
